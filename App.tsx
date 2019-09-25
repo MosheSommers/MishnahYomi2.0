@@ -4,6 +4,7 @@ import {
   ImageBackground,
   StyleSheet,
   View,
+  Text,
 } from 'react-native';
 
 import AsyncStorage from '@react-native-community/async-storage';
@@ -12,61 +13,49 @@ import TodaysMishnah from './app/components/TodaysMishnah/TodaysMishnah';
 import Settings from './app/components/Settings/Settings';
 import Footer  from './app/components/Footer/Footer';
 
-interface IAppProps{
-  showSettings:boolean
-}
+import { observer } from "mobx-react";
+import { observable } from 'mobx';
 
-interface IAppState{
-  showSettings:boolean,
-  startDate:string, 
-  isHebrew:boolean
-}
-
-export default class App extends React.Component<IAppProps, IAppState> {
+@observer
+export default class App extends React.Component {
+ 
+  
   constructor(props){
     super(props);
-    this.state = { 
-      showSettings:false,
-      startDate:"2019-08-17", //The default date for my MishnahYomi group
-      isHebrew:true
-    };
     this.getStoredSetting(); 
   }
+
+  @observable showSettings: boolean = false;
+  @observable startDate: string = "2019-08-17"; //The default date for my MishnahYomi group
+  @observable isHebrew: boolean = false;
 
   getStoredSetting: () => void = () => {
     AsyncStorage.getItem('startDate').then((startDate) => {
       if(startDate){
-        this.setState({
-          showSettings:this.state.showSettings,
-          startDate
-        });
+        this.startDate = startDate;
       }
     });
     AsyncStorage.getItem('isHebrew').then((isHebrew) => {
       if(isHebrew){
-        this.setState({
-          showSettings:this.state.showSettings,
-          startDate:this.state.startDate,
-          isHebrew:isHebrew === '1'
-        });
+        this.isHebrew = isHebrew === '1';
       }
     });
 
   };
 
   toggleSettings:() => void = () => { 
-    this.setState({
-      showSettings:!this.state.showSettings
-    });
+    this.showSettings = !this.showSettings;
   };
 
   setDate:(startDate:string) => void = (startDate) => {
-    this.setState({startDate, showSettings:false});
+    this.startDate = startDate;
+    this.showSettings = false;
     AsyncStorage.setItem('startDate',startDate);
   }
 
   setLanguage: (isHebrew:boolean) => void = (isHebrew) => {
-    this.setState({isHebrew: isHebrew, showSettings:false});
+    this.isHebrew = isHebrew;
+    this.showSettings = false;
     AsyncStorage.setItem('isHebrew', isHebrew ? '1' : '0');
   }
 
@@ -78,22 +67,23 @@ export default class App extends React.Component<IAppProps, IAppState> {
           source={require('./mishnahbackground.jpg')}
           style={styles.background}
           imageStyle={styles.logo}>   
-                <Header isHebrew={this.state.isHebrew} />
+                <Header isHebrew={this.isHebrew} />
+                {/* <View><Text>{this.isBeingObserved ? `Cool I'm being observed` : `SHHH..`}</Text></View> */}
                 <View>
                   <View style={styles.sectionContainer}>
-                    {!this.state.showSettings ?
+                    {!this.showSettings ?
                       <TodaysMishnah 
-                        isHebrew={this.state.isHebrew}
-                        startDate={this.state.startDate}/>:
+                        isHebrew={this.isHebrew}
+                        startDate={this.startDate}/>:
                       <Settings 
-                        isHebrew={this.state.isHebrew}
+                        isHebrew={this.isHebrew}
                         setLanguage={this.setLanguage}
-                        startDate={this.state.startDate} 
+                        startDate={this.startDate} 
                         setDate={this.setDate} />   
                     }
                   </View>    
                 </View>
-                <Footer showSettings={this.state.showSettings} toggleSettings={this.toggleSettings}/>
+                <Footer showSettings={this.showSettings} toggleSettings={this.toggleSettings}/>
         </ImageBackground>
       </View>
       
